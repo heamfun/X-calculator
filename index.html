@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>X 创作者转化率计算器</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --card-bg: #16181C;
+            --border-color: #333639;
+            --text-main: #E7E9EA;
+            --text-muted: #71767B;
+            --primary: #EFF3F4; /* 按钮白色 */
+            --primary-text: #0F1419; /* 按钮内黑字 */
+            --accent: #1D9BF0; /* X 蓝 */
+            --progress-fill: #00BA7C; /* X 绿 */
+            --danger: #F4212E;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(91, 112, 131, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            display: none;
+        }
+
+        .modal-card {
+            background-color: var(--bg);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-card h2 {
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .modal-card p, .modal-card li {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .modal-card ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: var(--primary-text);
+            border: none;
+            border-radius: 9999px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:active {
+            background-color: #D7DBDC;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* 进度条区域 */
+        .progress-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-desc {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-container {
+            background-color: #333639;
+            border-radius: 9999px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            background-color: var(--progress-fill);
+            height: 100%;
+            width: 0%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .sub-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .days-active {
+            margin-top: 16px;
+            font-size: 15px;
+            color: var(--text-main);
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* 计算区域 */
+        .calc-section {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .date-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .result-rate {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--progress-fill);
+            margin: 4px 0;
+        }
+
+        /* Canvas 隐藏 */
+        #exportCanvas {
+            display: none;
+        }
+        
+        .preview-img-container {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .preview-img-container img {
+            width: 100%;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 主界面 -->
+    <div class="container" id="main-view" style="display: none;">
+        <header>
+            <h1>曝光转化计算器</h1>
+            <button class="settings-btn" onclick="openSettings()">⚙️</button>
+        </header>
+
+        <div class="progress-card">
+            <div class="progress-desc">过去 90 天内，累积至少 50 万次已验证首页时间线曝光</div>
+            <div class="progress-bar-container">
+                <div class="progress-fill" id="ui-progress-fill"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="ui-progress-text">0K / 500K</span>
+                <span id="ui-progress-total">0K</span>
+            </div>
+            <div class="sub-text">回复不计入曝光</div>
+            <div class="days-active">已做 <span id="ui-days">0</span> 天</div>
+        </div>
+
+        <div class="calc-section">
+            <div class="date-header">今天日期: <span id="ui-today-date"></span></div>
+            
+            <div class="input-group">
+                <label>今天的最新进度 (K)</label>
+                <input type="number" id="input-today-prog" step="0.1" placeholder="例如: 275.6">
+            </div>
+
+            <div class="input-group">
+                <label>昨天后台显示的总曝光 (数字)</label>
+                <input type="number" id="input-total-imp" placeholder="例如: 45000">
+            </div>
+
+            <button class="btn" onclick="calculateRate()">计算昨天转化率</button>
+
+            <div class="result-box" id="ui-result-box">
+                <div class="result-title">昨日转化率</div>
+                <div class="result-rate" id="ui-rate-text">0.00%</div>
+                <div class="sub-text" id="ui-growth-text">昨日有效增长: 0</div>
+                <div class="sub-text" style="margin-top: 12px; color: var(--text-main);">
+                    计算已完成，今天的进度已自动保存。明天只需继续输入新数据即可。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 首次引导弹窗 -->
+    <div class="modal-overlay" id="intro-modal">
+        <div class="modal-card">
+            <h2>欢迎使用曝光转化计算器</h2>
+            <p>每天记录数据，直观看到内容推荐效率，及时调整方向。</p>
+            <ul>
+                <li><strong>有效曝光：</strong>Premium 用户在首页时间线的曝光（回复不计入）。</li>
+                <li><strong>有效增长：</strong>今天的进度条差值（今天进度 − 昨天进度）。</li>
+                <li><strong>转化率：</strong>昨天有效增长 ÷ 昨天总曝光 × 100%。</li>
+            </ul>
+            <p>因为今天的总曝光数据要等到明天才能统计，所以今天计算的是<strong>昨天的数据</strong>。</p>
+            <button class="btn" onclick="closeIntro()">开始使用</button>
+        </div>
+    </div>
+
+    <!-- 初始设置 / 设置弹窗 -->
+    <div class="modal-overlay" id="setup-modal">
+        <div class="modal-card">
+            <h2 id="setup-title">初始设置</h2>
+            <div class="input-group">
+                <label>你已经做了多少天？</label>
+                <input type="number" id="setup-days" placeholder="例如: 5">
+            </div>
+            <div class="input-group">
+                <label>当前的有效曝光进度 (K)</label>
+                <input type="number" id="setup-progress" step="0.1" placeholder="例如: 271.6">
+            </div>
+            <button class="btn" onclick="saveSetup()">保存并进入</button>
+            <button class="btn btn-outline" id="setup-cancel" onclick="closeSettings()" style="display: none;">取消</button>
+        </div>
+    </div>
+
+    <!-- 图片导出弹窗 -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal-card" style="max-width: 450px;">
+            <h2>计算完成</h2>
+            <div class="preview-img-container">
+                <img id="export-img" alt="生成的卡片预览" />
+            </div>
+            <button class="btn" onclick="downloadImage()">💾 保存图片</button>
+            <button class="btn btn-outline" onclick="closeExport()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 隐藏的 Canvas 用于绘图 -->
+    <canvas id="exportCanvas"></canvas>
+
+    <script>
+        // 状态管理
+        let state = {
+            daysActive: 0,
+            currentProgress: 0 // 单位 K
+        };
+
+        // DOM 元素加载完毕后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            document.getElementById('ui-today-date').innerText = getFormattedDate(new Date());
+        });
+
+        function initApp() {
+            const hasSeenIntro = localStorage.getItem('x_calc_intro');
+            const savedDays = localStorage.getItem('x_calc_days');
+            const savedProgress = localStorage.getItem('x_calc_progress');
+
+            if (!hasSeenIntro) {
+                document.getElementById('intro-modal').style.display = 'flex';
+            } else if (savedDays === null || savedProgress === null) {
+                document.getElementById('setup-modal').style.display = 'flex';
+                document.getElementById('setup-cancel').style.display = 'none';
+                document.getElementById('setup-title').innerText = '初始设置';
+            } else {
+                state.daysActive = parseInt(savedDays);
+                state.currentProgress = parseFloat(savedProgress);
+                renderMain();
+            }
+        }
+
+        function closeIntro() {
+            localStorage.setItem('x_calc_intro', 'true');
+            document.getElementById('intro-modal').style.display = 'none';
+            initApp();
+        }
+
+        function saveSetup() {
+            const days = parseInt(document.getElementById('setup-days').value);
+            const prog = parseFloat(document.getElementById('setup-progress').value);
+
+            if (isNaN(days) || isNaN(prog) || days < 0 || prog < 0) {
+                alert("请输入有效的数字！");
+                return;
+            }
+
+            state.daysActive = days;
+            state.currentProgress = prog;
+
+            localStorage.setItem('x_calc_days', days);
+            localStorage.setItem('x_calc_progress', prog);
+
+            document.getElementById('setup-modal').style.display = 'none';
+            
+            // 如果是从计算界面输入的最新进度，同步更新输入框
+            document.getElementById('input-today-prog').value = prog;
+            
+            renderMain();
+        }
+
+        function openSettings() {
+            document.getElementById('setup-title').innerText = '修改当前数据';
+            document.getElementById('setup-days').value = state.daysActive;
+            document.getElementById('setup-progress').value = state.currentProgress;
+            document.getElementById('setup-cancel').style.display = 'block';
+            document.getElementById('setup-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('setup-modal').style.display = 'none';
+        }
+
+        function renderMain() {
+            document.getElementById('main-view').style.display = 'block';
+            
+            // 更新进度条 UI
+            let percentage = (state.currentProgress / 500) * 100;
+            if (percentage > 100) percentage = 100;
+            
+            document.getElementById('ui-progress-fill').style.width = `${percentage}%`;
+            document.getElementById('ui-progress-text').innerText = `${state.currentProgress}K / 500K`;
+            document.getElementById('ui-progress-total').innerText = `${state.currentProgress}K`;
+            document.getElementById('ui-days').innerText = state.daysActive;
+
+            // 预填今天的进度（默认展示目前库里最新的）
+            if(!document.getElementById('input-today-prog').value) {
+                document.getElementById('input-today-prog').value = state.currentProgress;
+            }
+        }
+
+        function calculateRate() {
+            const todayProg = parseFloat(document.getElementById('input-today-prog').value);
+            const totalImp = parseFloat(document.getElementById('input-total-imp').value);
+            const yesterdayProg = state.currentProgress;
+
+            if (isNaN(todayProg) || isNaN(totalImp) || totalImp <= 0) {
+                alert("请输入有效的总曝光和今天进度数值！");
+                return;
+            }
+
+            if (todayProg < yesterdayProg) {
+                if(!confirm("您输入的最新进度小于昨天保存的进度，可能会导致负数增长，确定要计算吗？")) return;
+            }
+
+            // 计算逻辑
+            const growthK = (todayProg - yesterdayProg);
+            const growthRaw = Math.round(growthK * 1000); 
+            const rate = (growthRaw / totalImp) * 100;
+
+            // 更新 UI 结果
+            document.getElementById('ui-result-box').style.display = 'block';
+            document.getElementById('ui-rate-text').innerText = `${rate.toFixed(2)}%`;
+            document.getElementById('ui-growth-text').innerText = `昨日有效增长: ${growthRaw.toLocaleString()} ( ${yesterdayProg}K → ${todayProg}K )`;
+
+            // 生成卡片
+            generateCanvasImage(growthRaw, totalImp, rate, todayProg);
+
+            // 更新数据 (天数+1，进度更新为今天进度)
+            state.currentProgress = todayProg;
+            state.daysActive = state.daysActive + 1;
+            
+            localStorage.setItem('x_calc_progress', state.currentProgress);
+            localStorage.setItem('x_calc_days', state.daysActive);
+            
+            renderMain(); // 刷新上方进度条
+        }
+
+        function getFormattedDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // 画布生成逻辑
+        function generateCanvasImage(growth, totalImp, rate, currentProg) {
+            const canvas = document.getElementById('exportCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设定高清画布尺寸
+            const width = 1080;
+            const height = 1200;
+            canvas.width = width;
+            canvas.height = height;
+
+            // 绘制全黑背景
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            // 绘制卡片背景
+            ctx.fillStyle = '#16181C';
+            if (ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(80, 100, 920, 1000, 40);
+                ctx.fill();
+            } else {
+                ctx.fillRect(80, 100, 920, 1000); // 兼容老版本浏览器
+            }
+
+            // 获取昨天日期
+            let yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            let dateStr = getFormattedDate(yesterday);
+
+            // 绘制标题和日期
+            ctx.fillStyle = '#E7E9EA';
+            ctx.font = 'bold 64px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('X 创作者曝光转化率', width / 2, 220);
+
+            ctx.fillStyle = '#71767B';
+            ctx.font = '36px sans-serif';
+            ctx.fillText(`统计日期: ${dateStr}`, width / 2, 300);
+
+            // 分割线
+            ctx.strokeStyle = '#333639';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(140, 360);
+            ctx.lineTo(940, 360);
+            ctx.stroke();
+
+            // 核心数据展示 - 转化率
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#00BA7C';
+            ctx.font = 'bold 160px sans-serif';
+            ctx.fillText(`${rate.toFixed(2)}%`, width / 2, 560);
+            
+            ctx.fillStyle = '#71767B';
+            ctx.font = '40px sans-serif';
+            ctx.fillText('昨日有效转化率', width / 2, 640);
+
+            // 两列数据布局
+            ctx.textAlign = 'center';
+            
+            // 左列：总曝光
+            ctx.fillStyle = '#E7E9EA';
+            ctx.font = 'bold 60px sans-serif';
+            ctx.fillText(totalImp.toLocaleString(), 320, 780);
+            ctx.fillStyle = '#71767B';
+            ctx.font = '32px sans-serif';
+            ctx.fillText('总曝光量', 320, 840);
+
+            // 右列：有效增长
+            ctx.fillStyle = '#E7E9EA';
+            ctx.font = 'bold 60px sans-serif';
+            ctx.fillText(`+${growth.toLocaleString()}`, 760, 780);
+            ctx.fillStyle = '#71767B';
+            ctx.font = '32px sans-serif';
+            ctx.fillText('有效曝光增长', 760, 840);
+
+            // 底部进度状态
+            ctx.fillStyle = '#1D9BF0';
+            ctx.font = 'bold 40px sans-serif';
+            ctx.fillText(`当前总进度: ${currentProg}K / 500K`, width / 2, 1000);
+
+            // 将 Canvas 转换为图片展示
+            const imgData = canvas.toDataURL("image/png");
+            document.getElementById('export-img').src = imgData;
+            
+            // 弹出导出弹窗
+            document.getElementById('export-modal').style.display = 'flex';
+        }
+
+        function downloadImage() {
+            const imgData = document.getElementById('export-img').src;
+            const link = document.createElement('a');
+            
+            let yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            let dateStr = getFormattedDate(yesterday);
+            
+            link.download = `X_转化率_${dateStr}.png`;
+            link.href = imgData;
+            link.click();
+        }
+
+        function closeExport() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
