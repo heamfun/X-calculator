@@ -2,380 +2,335 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>X 创作者转化率计算器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>X Creator | 转化率计算器</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
-            --bg: #000000;
-            --card-bg: #16181C;
-            --border-color: #333639;
-            --text-main: #E7E9EA;
-            --text-muted: #71767B;
-            --primary: #EFF3F4; /* 按钮白色 */
-            --primary-text: #0F1419; /* 按钮内黑字 */
-            --accent: #1D9BF0; /* X 蓝 */
-            --progress-fill: #00BA7C; /* X 绿 */
-            --danger: #F4212E;
+            --bg-color: #0d1117;
+            --glass-bg: rgba(22, 27, 34, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-blue: #1f6feb;
+            --accent-green: #2ea043;
+            --accent-glow: rgba(46, 160, 67, 0.4);
+            --btn-bg: #f0f6fc;
+            --btn-text: #0d1117;
+            --input-bg: rgba(1, 4, 9, 0.6);
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg);
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
             color: var(--text-main);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰光晕 */
+        .bg-glow {
+            position: fixed; top: -10%; left: -10%; width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(31,111,235,0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1; border-radius: 50%; pointer-events: none;
+        }
+        .bg-glow-2 {
+            position: fixed; bottom: -10%; right: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(46,160,67,0.1) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1; border-radius: 50%; pointer-events: none;
         }
 
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
+            width: 100%; max-width: 500px;
+            display: flex; flex-direction: column; gap: 20px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: translateY(20px);
+        }
+
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* 顶部导航 */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0 20px; margin-bottom: 10px;
+        }
+        
+        header h1 {
+            font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #f0f6fc, #8b949e);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        .settings-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            color: var(--text-muted); width: 40px; height: 40px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px);
+        }
+        .settings-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.1); }
+
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px; box-shadow: var(--shadow-sm);
+            position: relative; overflow: hidden;
+        }
+
+        /* 进度条模块 */
+        .progress-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+        .progress-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .days-badge { background: rgba(31, 111, 235, 0.15); color: #58a6ff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(31, 111, 235, 0.3); }
+        
+        .progress-track {
+            width: 100%; height: 12px; background: rgba(0, 0, 0, 0.5);
+            border-radius: 999px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 12px; position: relative;
+        }
+        .progress-fill {
+            height: 100%; width: 0%; border-radius: 999px;
+            background: linear-gradient(90deg, #2ea043, #3fb950);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
         }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
+        .progress-fill::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite linear;
         }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-        h1 {
-            font-size: 20px;
-            font-weight: 700;
-        }
+        .progress-stats { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+        .progress-desc { font-size: 12px; color: var(--text-muted); margin-top: 16px; line-height: 1.6; }
 
-        .settings-btn {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        /* 模态框样式 */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(91, 112, 131, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-            display: none;
-        }
-
-        .modal-card {
-            background-color: var(--bg);
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            padding: 24px;
-            border: 1px solid var(--border-color);
-        }
-
-        .modal-card h2 {
-            font-size: 22px;
-            margin-bottom: 16px;
-        }
-
-        .modal-card p, .modal-card li {
-            color: var(--text-muted);
-            font-size: 15px;
-            margin-bottom: 12px;
-        }
+        /* 输入表单模块 */
+        .date-label { display: inline-block; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-bottom: 20px; border: 1px solid var(--glass-border); }
         
-        .modal-card ul {
-            padding-left: 20px;
-            margin-bottom: 20px;
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 8px; margin-left: 4px; }
+        .input-wrapper { position: relative; }
+        .input-wrapper input {
+            width: 100%; background: var(--input-bg);
+            border: 1px solid var(--glass-border); color: var(--text-main);
+            border-radius: var(--radius-sm); padding: 16px; font-size: 18px; font-weight: 600;
+            transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
-
-        .btn {
-            width: 100%;
-            background-color: var(--primary);
-            color: var(--primary-text);
-            border: none;
-            border-radius: 9999px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn:active {
-            background-color: #D7DBDC;
-        }
+        .input-wrapper input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3), inset 0 2px 4px rgba(0,0,0,0.2); background: rgba(1, 4, 9, 0.8); }
         
-        .btn-outline {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
+        .btn-primary {
+            width: 100%; background: var(--btn-bg); color: var(--btn-text);
+            border: none; border-radius: var(--radius-sm); padding: 18px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(240, 246, 252, 0.15);
+            margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;
         }
-
-        .input-group {
-            margin-bottom: 16px;
+        .btn-primary:active { transform: scale(0.98); background: #c9d1d9; }
+        
+        .btn-secondary {
+            background: transparent; color: var(--text-main);
+            border: 1px solid var(--glass-border); width: 100%;
+            border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-weight: 600;
+            margin-top: 12px; cursor: pointer; transition: all 0.2s ease;
         }
+        .btn-secondary:active { background: rgba(255,255,255,0.05); transform: scale(0.98); }
 
-        .input-group label {
-            display: block;
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .input-group input {
-            width: 100%;
-            background-color: var(--bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 16px;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        /* 进度条区域 */
-        .progress-card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            border: 1px solid var(--border-color);
-        }
-
-        .progress-desc {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .progress-bar-container {
-            background-color: #333639;
-            border-radius: 9999px;
-            height: 8px;
-            width: 100%;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .progress-fill {
-            background-color: var(--progress-fill);
-            height: 100%;
-            width: 0%;
-            border-radius: 9999px;
-            transition: width 0.5s ease;
-        }
-
-        .progress-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .sub-text {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        .days-active {
-            margin-top: 16px;
-            font-size: 15px;
-            color: var(--text-main);
-            text-align: center;
-            font-weight: bold;
-        }
-
-        /* 计算区域 */
-        .calc-section {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .date-header {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 16px;
-            color: var(--accent);
-        }
-
+        /* 结果展示区 */
         .result-box {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-            display: none;
+            margin-top: 24px; padding: 24px; border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(46, 160, 67, 0.1) 0%, rgba(0,0,0,0) 100%);
+            border: 1px solid rgba(46, 160, 67, 0.3); display: none; text-align: center;
+            animation: fadeIn 0.5s ease forwards;
         }
-
-        .result-title {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .result-rate {
-            font-size: 36px;
-            font-weight: 900;
-            color: var(--progress-fill);
-            margin: 4px 0;
-        }
-
-        /* Canvas 隐藏 */
-        #exportCanvas {
-            display: none;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .preview-img-container {
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            border: 1px solid var(--border-color);
+        .result-label { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .result-value { font-size: 48px; font-weight: 900; color: #3fb950; margin: 8px 0; text-shadow: 0 0 20px rgba(46, 160, 67, 0.4); line-height: 1; }
+        .result-details { display: flex; justify-content: space-around; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border); }
+        .detail-item { display: flex; flex-direction: column; align-items: center; }
+        .detail-v { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .detail-l { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* 模态窗 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+            opacity: 0; transition: opacity 0.3s ease;
         }
+        .modal-overlay.active { display: flex; opacity: 1; }
         
-        .preview-img-container img {
-            width: 100%;
-            display: block;
+        .modal-content {
+            background: #161b22; border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg); width: 100%; max-width: 400px;
+            padding: 32px 24px; box-shadow: var(--shadow-lg);
+            transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        
+        .modal-content h2 { font-size: 22px; font-weight: 800; margin-bottom: 16px; text-align: center; }
+        .modal-content p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 24px; text-align: center; }
+        
+        /* 导出图片预览 */
+        .preview-container {
+            width: 100%; border-radius: var(--radius-sm); overflow: hidden;
+            margin-bottom: 20px; border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .preview-container img { width: 100%; display: block; }
+        #exportCanvas { display: none; }
 
     </style>
 </head>
 <body>
 
-    <!-- 主界面 -->
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
     <div class="container" id="main-view" style="display: none;">
         <header>
-            <h1>曝光转化计算器</h1>
-            <button class="settings-btn" onclick="openSettings()">⚙️</button>
+            <h1>X Creator Calc</h1>
+            <button class="settings-btn" onclick="openSettings()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
         </header>
 
-        <div class="progress-card">
-            <div class="progress-desc">过去 90 天内，累积至少 50 万次已验证首页时间线曝光</div>
-            <div class="progress-bar-container">
+        <div class="glass-card">
+            <div class="progress-header">
+                <span class="progress-title">收益共享资格进度</span>
+                <span class="days-badge" id="ui-days">已坚持 0 天</span>
+            </div>
+            <div class="progress-track">
                 <div class="progress-fill" id="ui-progress-fill"></div>
             </div>
             <div class="progress-stats">
                 <span id="ui-progress-text">0K / 500K</span>
-                <span id="ui-progress-total">0K</span>
+                <span id="ui-progress-pct" style="color: #3fb950;">0%</span>
             </div>
-            <div class="sub-text">回复不计入曝光</div>
-            <div class="days-active">已做 <span id="ui-days">0</span> 天</div>
+            <div class="progress-desc">需在过去 90 天内累积至少 500 万次 (500K) 已验证首页时间线曝光。回复带来的曝光不计入。</div>
         </div>
 
-        <div class="calc-section">
-            <div class="date-header">今天日期: <span id="ui-today-date"></span></div>
+        <div class="glass-card">
+            <div class="date-label">📅 记录日期：<span id="ui-today-date"></span></div>
             
             <div class="input-group">
-                <label>今天的最新进度 (K)</label>
-                <input type="number" id="input-today-prog" step="0.1" placeholder="例如: 275.6">
-            </div>
-
-            <div class="input-group">
-                <label>昨天后台显示的总曝光 (数字)</label>
-                <input type="number" id="input-total-imp" placeholder="例如: 45000">
-            </div>
-
-            <button class="btn" onclick="calculateRate()">计算昨天转化率</button>
-
-            <div class="result-box" id="ui-result-box">
-                <div class="result-title">昨日转化率</div>
-                <div class="result-rate" id="ui-rate-text">0.00%</div>
-                <div class="sub-text" id="ui-growth-text">昨日有效增长: 0</div>
-                <div class="sub-text" style="margin-top: 12px; color: var(--text-main);">
-                    计算已完成，今天的进度已自动保存。明天只需继续输入新数据即可。
+                <label>1. 今日最新主页进度 (K)</label>
+                <div class="input-wrapper">
+                    <input type="number" inputmode="decimal" id="input-today-prog" placeholder="例: 275.6">
                 </div>
             </div>
+
+            <div class="input-group">
+                <label>2. 昨日后台总曝光量 (精确数值)</label>
+                <div class="input-wrapper">
+                    <input type="number" inputmode="numeric" id="input-total-imp" placeholder="例: 45000">
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="calculateRate()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                生成数据报告
+            </button>
+
+            <div class="result-box" id="ui-result-box">
+                <div class="result-label">昨日真实转化率</div>
+                <div class="result-value" id="ui-rate-text">0.00%</div>
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span class="detail-v" id="ui-growth-text">+0</span>
+                        <span class="detail-l">有效曝光增长</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-v" id="ui-prog-change">0K → 0K</span>
+                        <span class="detail-l">进度变化</span>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">数据已自动保存。明天直接输入新数据即可。</div>
+            </div>
         </div>
     </div>
 
-    <!-- 首次引导弹窗 -->
-    <div class="modal-overlay" id="intro-modal">
-        <div class="modal-card">
-            <h2>欢迎使用曝光转化计算器</h2>
-            <p>每天记录数据，直观看到内容推荐效率，及时调整方向。</p>
-            <ul>
-                <li><strong>有效曝光：</strong>Premium 用户在首页时间线的曝光（回复不计入）。</li>
-                <li><strong>有效增长：</strong>今天的进度条差值（今天进度 − 昨天进度）。</li>
-                <li><strong>转化率：</strong>昨天有效增长 ÷ 昨天总曝光 × 100%。</li>
-            </ul>
-            <p>因为今天的总曝光数据要等到明天才能统计，所以今天计算的是<strong>昨天的数据</strong>。</p>
-            <button class="btn" onclick="closeIntro()">开始使用</button>
-        </div>
-    </div>
-
-    <!-- 初始设置 / 设置弹窗 -->
+    <!-- 引导 & 设置合并弹窗 -->
     <div class="modal-overlay" id="setup-modal">
-        <div class="modal-card">
-            <h2 id="setup-title">初始设置</h2>
+        <div class="modal-content">
+            <h2 id="setup-title">初始化数据</h2>
+            <p id="setup-desc">为了准确计算增长，我们需要知道您目前的进度起点。</p>
+            
             <div class="input-group">
-                <label>你已经做了多少天？</label>
-                <input type="number" id="setup-days" placeholder="例如: 5">
+                <label>已运营天数</label>
+                <div class="input-wrapper">
+                    <input type="number" inputmode="numeric" id="setup-days" placeholder="例: 5">
+                </div>
             </div>
             <div class="input-group">
-                <label>当前的有效曝光进度 (K)</label>
-                <input type="number" id="setup-progress" step="0.1" placeholder="例如: 271.6">
+                <label>当前进度面板显示的数值 (K)</label>
+                <div class="input-wrapper">
+                    <input type="number" inputmode="decimal" id="setup-progress" placeholder="例: 271.6">
+                </div>
             </div>
-            <button class="btn" onclick="saveSetup()">保存并进入</button>
-            <button class="btn btn-outline" id="setup-cancel" onclick="closeSettings()" style="display: none;">取消</button>
+            <button class="btn-primary" onclick="saveSetup()">保存并进入</button>
+            <button class="btn-secondary" id="setup-cancel" onclick="closeSettings()" style="display: none;">取消</button>
         </div>
     </div>
 
-    <!-- 图片导出弹窗 -->
+    <!-- 导出弹窗 -->
     <div class="modal-overlay" id="export-modal">
-        <div class="modal-card" style="max-width: 450px;">
-            <h2>计算完成</h2>
-            <div class="preview-img-container">
-                <img id="export-img" alt="生成的卡片预览" />
+        <div class="modal-content" style="max-width: 450px;">
+            <h2>报告生成完毕</h2>
+            <div class="preview-container">
+                <img id="export-img" alt="数据海报预览" />
             </div>
-            <button class="btn" onclick="downloadImage()">💾 保存图片</button>
-            <button class="btn btn-outline" onclick="closeExport()">关闭</button>
+            <button class="btn-primary" onclick="downloadImage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                保存高清海报
+            </button>
+            <button class="btn-secondary" onclick="closeExport()">关闭预览</button>
         </div>
     </div>
 
-    <!-- 隐藏的 Canvas 用于绘图 -->
     <canvas id="exportCanvas"></canvas>
 
     <script>
-        // 状态管理
-        let state = {
-            daysActive: 0,
-            currentProgress: 0 // 单位 K
-        };
+        let state = { daysActive: 0, currentProgress: 0 };
 
-        // DOM 元素加载完毕后初始化
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
             document.getElementById('ui-today-date').innerText = getFormattedDate(new Date());
         });
 
-        function initApp() {
-            const hasSeenIntro = localStorage.getItem('x_calc_intro');
-            const savedDays = localStorage.getItem('x_calc_days');
-            const savedProgress = localStorage.getItem('x_calc_progress');
+        function showModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
 
-            if (!hasSeenIntro) {
-                document.getElementById('intro-modal').style.display = 'flex';
-            } else if (savedDays === null || savedProgress === null) {
-                document.getElementById('setup-modal').style.display = 'flex';
+        function hideModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function initApp() {
+            const savedDays = localStorage.getItem('x_calc_days_v2');
+            const savedProgress = localStorage.getItem('x_calc_progress_v2');
+
+            if (savedDays === null || savedProgress === null) {
                 document.getElementById('setup-cancel').style.display = 'none';
-                document.getElementById('setup-title').innerText = '初始设置';
+                showModal('setup-modal');
             } else {
                 state.daysActive = parseInt(savedDays);
                 state.currentProgress = parseFloat(savedProgress);
@@ -383,60 +338,50 @@
             }
         }
 
-        function closeIntro() {
-            localStorage.setItem('x_calc_intro', 'true');
-            document.getElementById('intro-modal').style.display = 'none';
-            initApp();
-        }
-
         function saveSetup() {
             const days = parseInt(document.getElementById('setup-days').value);
             const prog = parseFloat(document.getElementById('setup-progress').value);
 
             if (isNaN(days) || isNaN(prog) || days < 0 || prog < 0) {
-                alert("请输入有效的数字！");
-                return;
+                alert("请输入有效的正数！"); return;
             }
 
             state.daysActive = days;
             state.currentProgress = prog;
 
-            localStorage.setItem('x_calc_days', days);
-            localStorage.setItem('x_calc_progress', prog);
+            localStorage.setItem('x_calc_days_v2', days);
+            localStorage.setItem('x_calc_progress_v2', prog);
 
-            document.getElementById('setup-modal').style.display = 'none';
-            
-            // 如果是从计算界面输入的最新进度，同步更新输入框
+            hideModal('setup-modal');
             document.getElementById('input-today-prog').value = prog;
-            
             renderMain();
         }
 
         function openSettings() {
-            document.getElementById('setup-title').innerText = '修改当前数据';
+            document.getElementById('setup-title').innerText = '数据校准';
+            document.getElementById('setup-desc').innerText = '手动修正您的运营天数或当前总进度。';
             document.getElementById('setup-days').value = state.daysActive;
             document.getElementById('setup-progress').value = state.currentProgress;
             document.getElementById('setup-cancel').style.display = 'block';
-            document.getElementById('setup-modal').style.display = 'flex';
+            showModal('setup-modal');
         }
 
-        function closeSettings() {
-            document.getElementById('setup-modal').style.display = 'none';
-        }
+        function closeSettings() { hideModal('setup-modal'); }
 
         function renderMain() {
-            document.getElementById('main-view').style.display = 'block';
+            document.getElementById('main-view').style.display = 'flex';
             
-            // 更新进度条 UI
             let percentage = (state.currentProgress / 500) * 100;
             if (percentage > 100) percentage = 100;
             
-            document.getElementById('ui-progress-fill').style.width = `${percentage}%`;
+            setTimeout(() => {
+                document.getElementById('ui-progress-fill').style.width = `${percentage}%`;
+            }, 100);
+            
             document.getElementById('ui-progress-text').innerText = `${state.currentProgress}K / 500K`;
-            document.getElementById('ui-progress-total').innerText = `${state.currentProgress}K`;
-            document.getElementById('ui-days').innerText = state.daysActive;
+            document.getElementById('ui-progress-pct').innerText = `${percentage.toFixed(1)}%`;
+            document.getElementById('ui-days').innerText = `已坚持 ${state.daysActive} 天`;
 
-            // 预填今天的进度（默认展示目前库里最新的）
             if(!document.getElementById('input-today-prog').value) {
                 document.getElementById('input-today-prog').value = state.currentProgress;
             }
@@ -448,150 +393,154 @@
             const yesterdayProg = state.currentProgress;
 
             if (isNaN(todayProg) || isNaN(totalImp) || totalImp <= 0) {
-                alert("请输入有效的总曝光和今天进度数值！");
-                return;
+                alert("请输入有效的数据！"); return;
             }
+            if (todayProg < yesterdayProg && !confirm("今日进度小于昨日保存的进度，确定计算？")) return;
 
-            if (todayProg < yesterdayProg) {
-                if(!confirm("您输入的最新进度小于昨天保存的进度，可能会导致负数增长，确定要计算吗？")) return;
-            }
-
-            // 计算逻辑
-            const growthK = (todayProg - yesterdayProg);
-            const growthRaw = Math.round(growthK * 1000); 
+            const growthRaw = Math.round((todayProg - yesterdayProg) * 1000); 
             const rate = (growthRaw / totalImp) * 100;
 
-            // 更新 UI 结果
             document.getElementById('ui-result-box').style.display = 'block';
             document.getElementById('ui-rate-text').innerText = `${rate.toFixed(2)}%`;
-            document.getElementById('ui-growth-text').innerText = `昨日有效增长: ${growthRaw.toLocaleString()} ( ${yesterdayProg}K → ${todayProg}K )`;
+            document.getElementById('ui-growth-text').innerText = `+${growthRaw.toLocaleString()}`;
+            document.getElementById('ui-prog-change').innerText = `${yesterdayProg}K → ${todayProg}K`;
 
-            // 生成卡片
-            generateCanvasImage(growthRaw, totalImp, rate, todayProg);
+            generateCanvasImage(growthRaw, totalImp, rate, todayProg, yesterdayProg);
 
-            // 更新数据 (天数+1，进度更新为今天进度)
             state.currentProgress = todayProg;
-            state.daysActive = state.daysActive + 1;
-            
-            localStorage.setItem('x_calc_progress', state.currentProgress);
-            localStorage.setItem('x_calc_days', state.daysActive);
-            
-            renderMain(); // 刷新上方进度条
+            state.daysActive += 1;
+            localStorage.setItem('x_calc_progress_v2', state.currentProgress);
+            localStorage.setItem('x_calc_days_v2', state.daysActive);
+            renderMain();
         }
 
         function getFormattedDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
-        // 画布生成逻辑
-        function generateCanvasImage(growth, totalImp, rate, currentProg) {
+        // 高级渐变海报生成
+        function generateCanvasImage(growth, totalImp, rate, currentProg, oldProg) {
             const canvas = document.getElementById('exportCanvas');
             const ctx = canvas.getContext('2d');
-            
-            // 设定高清画布尺寸
-            const width = 1080;
-            const height = 1200;
-            canvas.width = width;
-            canvas.height = height;
+            const W = 1080, H = 1350; // Instagram 4:5 比例
+            canvas.width = W; canvas.height = H;
 
-            // 绘制全黑背景
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, width, height);
+            // 深邃渐变背景
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+            bgGrad.addColorStop(0, '#0d1117');
+            bgGrad.addColorStop(1, '#050709');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
 
-            // 绘制卡片背景
-            ctx.fillStyle = '#16181C';
+            // 绘制发光装饰环
+            ctx.beginPath();
+            ctx.arc(W/2, 500, 350, 0, Math.PI*2);
+            const glowGrad = ctx.createRadialGradient(W/2, 500, 100, W/2, 500, 350);
+            glowGrad.addColorStop(0, 'rgba(46, 160, 67, 0.15)');
+            glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = glowGrad;
+            ctx.fill();
+
+            // 玻璃拟态主面板
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
+            ctx.fillStyle = '#161b22';
             if (ctx.roundRect) {
-                ctx.beginPath();
-                ctx.roundRect(80, 100, 920, 1000, 40);
-                ctx.fill();
+                ctx.beginPath(); ctx.roundRect(80, 120, 920, 1100, 48); ctx.fill();
             } else {
-                ctx.fillRect(80, 100, 920, 1000); // 兼容老版本浏览器
+                ctx.fillRect(80, 120, 920, 1100);
+            }
+            
+            // 面板内发光边框效果
+            ctx.shadowColor = 'transparent';
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 2;
+            if (ctx.roundRect) {
+                ctx.beginPath(); ctx.roundRect(80, 120, 920, 1100, 48); ctx.stroke();
             }
 
-            // 获取昨天日期
-            let yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            let dateStr = getFormattedDate(yesterday);
-
-            // 绘制标题和日期
-            ctx.fillStyle = '#E7E9EA';
-            ctx.font = 'bold 64px sans-serif';
+            // 日期 & 标题
+            let yDate = new Date(); yDate.setDate(yDate.getDate() - 1);
+            
             ctx.textAlign = 'center';
-            ctx.fillText('X 创作者曝光转化率', width / 2, 220);
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '500 36px "SF Pro Text", sans-serif';
+            ctx.fillText(`DATA REPORT · ${getFormattedDate(yDate)}`, W/2, 220);
 
-            ctx.fillStyle = '#71767B';
-            ctx.font = '36px sans-serif';
-            ctx.fillText(`统计日期: ${dateStr}`, width / 2, 300);
+            ctx.fillStyle = '#f0f6fc';
+            ctx.font = '900 64px "SF Pro Display", sans-serif';
+            ctx.fillText('X Creator 转化复盘', W/2, 310);
+
+            // 转化率圆环
+            ctx.beginPath();
+            ctx.arc(W/2, 560, 180, 0, Math.PI*2);
+            ctx.strokeStyle = '#0d1117'; ctx.lineWidth = 24; ctx.stroke();
+            
+            ctx.beginPath();
+            let endAngle = -Math.PI/2 + (rate/100) * Math.PI * 2;
+            if(rate > 100) endAngle = Math.PI*1.5;
+            if(rate <= 0) endAngle = -Math.PI/2;
+            ctx.arc(W/2, 560, 180, -Math.PI/2, endAngle);
+            ctx.strokeStyle = '#3fb950'; ctx.lineCap = 'round'; ctx.stroke();
+
+            // 核心转化率文字
+            ctx.fillStyle = '#3fb950';
+            ctx.font = '900 110px "SF Pro Display", sans-serif';
+            ctx.fillText(`${rate.toFixed(2)}%`, W/2, 580);
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '500 32px "SF Pro Text", sans-serif';
+            ctx.fillText('昨日有效转化率', W/2, 650);
 
             // 分割线
-            ctx.strokeStyle = '#333639';
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(140, 360);
-            ctx.lineTo(940, 360);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(160, 800); ctx.lineTo(920, 800); ctx.stroke();
 
-            // 核心数据展示 - 转化率
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#00BA7C';
-            ctx.font = 'bold 160px sans-serif';
-            ctx.fillText(`${rate.toFixed(2)}%`, width / 2, 560);
+            // 数据对比网格
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '500 32px "SF Pro Text", sans-serif';
+            ctx.fillText('总曝光量', 220, 900);
+            ctx.fillText('有效增长', 620, 900);
+
+            ctx.fillStyle = '#f0f6fc';
+            ctx.font = '700 56px "SF Pro Display", sans-serif';
+            ctx.fillText(totalImp.toLocaleString(), 220, 970);
+            ctx.fillStyle = '#3fb950';
+            ctx.fillText(`+${growth.toLocaleString()}`, 620, 970);
+
+            // 底部总进度模块
+            ctx.fillStyle = '#0d1117';
+            if (ctx.roundRect) {
+                ctx.beginPath(); ctx.roundRect(140, 1050, 800, 120, 24); ctx.fill();
+            } else {
+                ctx.fillRect(140, 1050, 800, 120);
+            }
             
-            ctx.fillStyle = '#71767B';
-            ctx.font = '40px sans-serif';
-            ctx.fillText('昨日有效转化率', width / 2, 640);
-
-            // 两列数据布局
-            ctx.textAlign = 'center';
+            ctx.fillStyle = '#58a6ff';
+            ctx.textAlign = 'left';
+            ctx.font = '700 36px "SF Pro Display", sans-serif';
+            ctx.fillText(`当前总进度: ${currentProg}K / 500K`, 190, 1125);
             
-            // 左列：总曝光
-            ctx.fillStyle = '#E7E9EA';
-            ctx.font = 'bold 60px sans-serif';
-            ctx.fillText(totalImp.toLocaleString(), 320, 780);
-            ctx.fillStyle = '#71767B';
-            ctx.font = '32px sans-serif';
-            ctx.fillText('总曝光量', 320, 840);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '500 28px "SF Pro Text", sans-serif';
+            ctx.fillText(`${oldProg}K → ${currentProg}K`, 900, 1122);
 
-            // 右列：有效增长
-            ctx.fillStyle = '#E7E9EA';
-            ctx.font = 'bold 60px sans-serif';
-            ctx.fillText(`+${growth.toLocaleString()}`, 760, 780);
-            ctx.fillStyle = '#71767B';
-            ctx.font = '32px sans-serif';
-            ctx.fillText('有效曝光增长', 760, 840);
-
-            // 底部进度状态
-            ctx.fillStyle = '#1D9BF0';
-            ctx.font = 'bold 40px sans-serif';
-            ctx.fillText(`当前总进度: ${currentProg}K / 500K`, width / 2, 1000);
-
-            // 将 Canvas 转换为图片展示
-            const imgData = canvas.toDataURL("image/png");
-            document.getElementById('export-img').src = imgData;
-            
-            // 弹出导出弹窗
-            document.getElementById('export-modal').style.display = 'flex';
+            // 展示图
+            document.getElementById('export-img').src = canvas.toDataURL("image/png");
+            showModal('export-modal');
         }
 
         function downloadImage() {
-            const imgData = document.getElementById('export-img').src;
             const link = document.createElement('a');
-            
-            let yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            let dateStr = getFormattedDate(yesterday);
-            
-            link.download = `X_转化率_${dateStr}.png`;
-            link.href = imgData;
+            let yd = new Date(); yd.setDate(yd.getDate() - 1);
+            link.download = `X_Report_${getFormattedDate(yd)}.png`;
+            link.href = document.getElementById('export-img').src;
             link.click();
         }
 
-        function closeExport() {
-            document.getElementById('export-modal').style.display = 'none';
-        }
+        function closeExport() { hideModal('export-modal'); }
     </script>
 </body>
 </html>
